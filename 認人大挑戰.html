@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>變身大挑戰｜信眾辨識訓練</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#241d15;
+  --paper:#ece3cd;
+  --paper-dark:#d8cbaa;
+  --vermilion:#8c2b32;
+  --vermilion-deep:#6e1f26;
+  --brass:#a9843f;
+  --gold:#c9a24b;
+  --jade:#3f5c4c;
+  --jade-deep:#2c4235;
+  --danger:#8c2b32;
+  --shadow: 0 8px 24px rgba(36,29,21,.25);
+  --radius: 14px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(circle at 15% 10%, rgba(201,162,75,.15), transparent 40%),
+    radial-gradient(circle at 85% 90%, rgba(140,43,50,.12), transparent 45%),
+    var(--paper);
+  font-family:'Noto Sans TC', sans-serif;
+  color:var(--ink);
+  min-height:100vh;
+  padding:24px 14px 60px;
+}
+.wrap{max-width:900px;margin:0 auto;}
+h1,h2,h3{font-family:'Noto Serif TC', serif;margin:0;}
+.seal-title{
+  display:flex;align-items:center;justify-content:center;gap:14px;
+  margin-bottom:6px;
+}
+.seal-title .mark{
+  width:46px;height:46px;border-radius:50%;
+  background:var(--vermilion);color:var(--paper);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Noto Serif TC',serif;font-weight:900;font-size:20px;
+  box-shadow:var(--shadow);
+  flex:none;
+}
+.seal-title h1{font-size:clamp(26px,5vw,38px);font-weight:900;letter-spacing:.08em;color:var(--ink);}
+.subtitle{
+  text-align:center;color:var(--brass);font-weight:500;letter-spacing:.12em;
+  margin-bottom:28px;font-size:14px;
+}
+.card{
+  background:var(--paper);
+  border:1px solid var(--paper-dark);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:28px clamp(16px,4vw,36px);
+  position:relative;
+  overflow:hidden;
+}
+.card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:6px;
+  background:repeating-linear-gradient(90deg,var(--vermilion) 0 18px, var(--gold) 18px 24px);
+}
+.hud{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:18px;flex-wrap:wrap;gap:10px;
+}
+.hud .stat{
+  background:var(--ink);color:var(--paper);
+  padding:8px 16px;border-radius:999px;font-weight:700;font-size:14px;
+  letter-spacing:.05em;
+}
+.hud .stat b{color:var(--gold);font-size:16px;margin-left:4px;}
+.timerbar-outer{
+  width:100%;height:8px;background:var(--paper-dark);border-radius:999px;overflow:hidden;margin-bottom:18px;
+}
+.timerbar-inner{height:100%;background:linear-gradient(90deg,var(--jade),var(--gold));width:100%;transition:width .2s linear;}
+.timerbar-inner.warn{background:linear-gradient(90deg,var(--vermilion),var(--gold));}
+p.lead{font-size:15.5px;line-height:1.9;color:#3a2f21;}
+.btn{
+  font-family:'Noto Serif TC',serif;
+  background:var(--vermilion);color:var(--paper);
+  border:none;padding:13px 30px;border-radius:999px;
+  font-size:16px;font-weight:700;letter-spacing:.08em;
+  cursor:pointer;box-shadow:var(--shadow);
+  transition:transform .15s ease, background .15s ease;
+}
+.btn:hover{background:var(--vermilion-deep);transform:translateY(-2px);}
+.btn:active{transform:translateY(0);}
+.btn.ghost{
+  background:transparent;color:var(--vermilion);border:2px solid var(--vermilion);
+  box-shadow:none;
+}
+.btn.ghost:hover{background:var(--vermilion);color:var(--paper);}
+.btn.jade{background:var(--jade);}
+.btn.jade:hover{background:var(--jade-deep);}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.center{text-align:center;}
+.stage-list{margin:18px 0 24px;padding-left:0;list-style:none;}
+.stage-list li{
+  display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;
+  font-size:14.5px;line-height:1.7;
+}
+.stage-list .num{
+  flex:none;width:26px;height:26px;border-radius:50%;background:var(--jade);color:var(--paper);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;
+}
+.grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:14px;margin:20px 0;
+}
+.avatar-card{
+  background:var(--paper-dark);
+  border:2px solid transparent;
+  border-radius:12px;padding:12px 8px 10px;
+  text-align:center;cursor:pointer;user-select:none;
+  transition:transform .12s ease, border-color .12s ease, background .12s ease;
+  position:relative;
+}
+.avatar-card:hover{transform:translateY(-3px);}
+.avatar-card.static{cursor:default;}
+.avatar-card.static:hover{transform:none;}
+.avatar-card.correct{border-color:var(--jade);background:#d3ddc9;}
+.avatar-card.wrong{border-color:var(--vermilion);background:#e3c3c3;}
+.avatar-card.selected{border-color:var(--brass);background:#f0e3c0;}
+.avatar-face{
+  width:96px;height:96px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #f3e6c5, #d8be86);
+  margin:0 auto 8px;
+  display:flex;align-items:center;justify-content:center;font-size:24px;
+  box-shadow:inset 0 -4px 8px rgba(0,0,0,.12);
+  overflow:hidden;
+}
+.avatar-face img{width:100%;height:100%;object-fit:cover;object-position:top center;}
+.profile-card .avatar-face{width:110px;height:110px;flex:none;}
+.zoom-btn{
+  position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;
+  background:rgba(36,29,21,.72);color:var(--paper);border:none;
+  display:flex;align-items:center;justify-content:center;font-size:13px;
+  cursor:pointer;z-index:2;
+}
+.zoom-btn:hover{background:var(--vermilion);}
+.lightbox{
+  position:fixed;inset:0;background:rgba(20,15,10,.9);z-index:200;
+  display:none;align-items:center;justify-content:center;cursor:zoom-out;padding:20px;
+}
+.lightbox.show{display:flex;}
+.lightbox img{max-width:min(90vw,480px);max-height:85vh;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.profile-list{display:flex;flex-direction:column;gap:12px;margin:18px 0;max-height:420px;overflow-y:auto;padding-right:4px;}
+.profile-card{
+  display:flex;gap:14px;align-items:center;
+  background:var(--paper-dark);border-radius:12px;padding:12px 16px;
+}
+.profile-card .avatar-face{margin:0;flex:none;}
+.profile-info{font-size:13px;line-height:1.8;}
+.profile-info .name{font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;color:var(--vermilion-deep);}
+.profile-info .tag{display:inline-block;background:var(--jade);color:var(--paper);font-size:11px;padding:1px 8px;border-radius:999px;margin-left:6px;}
+.clue-box{
+  background:var(--vermilion);color:var(--paper);border-radius:12px;
+  padding:18px 20px;margin-bottom:20px;font-family:'Noto Serif TC',serif;
+  font-size:17px;line-height:1.8;font-weight:500;box-shadow:var(--shadow);
+  position:relative;
+}
+.clue-box .role-eyebrow{font-size:12px;letter-spacing:.2em;opacity:.85;margin-bottom:6px;font-family:'Noto Sans TC',sans-serif;}
+.feedback-flash{
+  position:fixed;inset:0;pointer-events:none;opacity:0;z-index:50;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Noto Serif TC',serif;font-size:60px;font-weight:900;color:var(--paper);
+  transition:opacity .15s ease;
+}
+.feedback-flash.show{opacity:1;}
+.feedback-flash.good{background:rgba(63,92,76,.85);}
+.feedback-flash.bad{background:rgba(140,43,50,.85);}
+.divider{height:1px;background:var(--paper-dark);margin:22px 0;}
+.rank-badge{
+  display:inline-block;background:var(--gold);color:var(--ink);
+  padding:6px 20px;border-radius:999px;font-weight:700;letter-spacing:.1em;font-size:14px;margin-top:10px;
+}
+.score-huge{font-family:'Noto Serif TC',serif;font-size:56px;font-weight:900;color:var(--vermilion);margin:6px 0;}
+.round-log{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:16px 0;}
+.round-log span{
+  width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:var(--paper);
+}
+.round-log .ok{background:var(--jade);}
+.round-log .no{background:var(--vermilion);}
+.mini-note{font-size:12.5px;color:var(--brass);margin-top:4px;}
+.btnbar{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px;}
+.music-btn{
+  position:fixed;top:16px;right:16px;z-index:60;
+  width:44px;height:44px;border-radius:50%;border:none;
+  background:var(--ink);color:var(--gold);font-size:18px;cursor:pointer;
+  box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;
+  transition:transform .15s ease;
+}
+.music-btn:hover{transform:scale(1.08);}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));}
+  .avatar-face{width:76px;height:76px;font-size:20px;}
+  .score-huge{font-size:42px;}
+}
+</style>
+</head>
+<body>
+<button class="music-btn" id="musicBtn" onclick="toggleMusic()" aria-label="開關背景音樂">🔈</button>
+<audio id="bgm" loop preload="auto">
+  <source src="https://raw.githubusercontent.com/puuyuu/Immortal-Sword/main/bgm.mp3" type="audio/mpeg">
+</audio>
+<div class="wrap">
+  <div class="seal-title"><div class="mark">護</div><h1>變身大挑戰</h1></div>
+  <div class="subtitle">線上版・信眾辨識訓練</div>
+  <div class="card" id="app"></div>
+</div>
+<div class="feedback-flash" id="flash"></div>
+<div class="lightbox" id="lightbox"><img id="lightboxImg" src="" alt=""></div>
+
+<script>
+/* ---------------- 資料設定（固定 12 位信眾，含真實人像） ---------------- */
+const GH = 'https://raw.githubusercontent.com/puuyuu/Immortal-Sword/refs/heads/main/';
+const FIXED_CHARS = [
+  {name:'劉如意', dharma:'傳暉', age:'64歲', gender:'女', role:'副會長',   classTime:'日間', classLevel:'研經班', lunch:'要',   merit:'如意',       special:'貴賓',     appearance:'短捲髮、金框眼鏡、笑容親切、喜歡搭配絲巾', img:GH+'%E5%8A%89%E5%A6%82%E6%84%8F.png'},
+  {name:'陳建宏', dharma:'傳慧', age:'67歲', gender:'男', role:'會長',     classTime:'夜間', classLevel:'高級班', lunch:'不要', merit:'總功德主',   special:'一般信眾', appearance:'灰白短髮、濃眉、身材高瘦、常戴鴨舌帽', img:GH+'%E9%99%B3%E5%BB%BA%E5%AE%8F.png'},
+  {name:'林美玲', dharma:'傳仁', age:'62歲', gender:'女', role:'組長',     classTime:'日間', classLevel:'中級班', lunch:'只要湯', merit:'吉祥',     special:'社會賢達', appearance:'齊肩短髮、珍珠耳環、氣質優雅、常帶手提包', img:GH+'%E6%9E%97%E7%BE%8E%E7%8E%B2.png'},
+  {name:'黃志豪', dharma:'傳德', age:'57歲', gender:'男', role:'總幹事',   classTime:'夜間', classLevel:'初級班', lunch:'要',   merit:'莊嚴功德主', special:'一般信眾', appearance:'平頭、方框眼鏡、身材壯碩、習慣穿休閒外套', img:GH+'%E9%BB%83%E5%BF%97%E8%B1%AA.png'},
+  {name:'張淑芬', dharma:'傳心', age:'58歲', gender:'女', role:'諮詢委員', classTime:'日間', classLevel:'高級班', lunch:'不要', merit:'副總功德主', special:'VIP神秘客', appearance:'微捲短髮、紅色圍巾、笑容爽朗、穿著俐落', img:GH+'%E5%BC%B5%E6%B7%91%E8%8A%AC.png'},
+  {name:'李俊傑', dharma:'傳道', age:'55歲', gender:'男', role:'執秘',     classTime:'夜間', classLevel:'研經班', lunch:'要',   merit:'如意',       special:'一般信眾', appearance:'黑框眼鏡、襯衫搭牛仔褲、痞子形象、拿手搖杯', img:GH+'%E6%9D%8E%E4%BF%8A%E5%82%91.png'},
+  {name:'王雅婷', dharma:'傳學', age:'42歲', gender:'女', role:'組長',     classTime:'日間', classLevel:'初級班', lunch:'只要湯', merit:'吉祥',     special:'客訴客戶', appearance:'馬尾髮型、亮色上衣、配戴手錶、個性活潑', img:GH+'%E7%8E%8B%E9%9B%85%E5%A9%B7.png'},
+  {name:'吳家豪', dharma:'傳法', age:'38歲', gender:'男', role:'副會長',   classTime:'夜間', classLevel:'中級班', lunch:'要',   merit:'總功德主',   special:'一般信眾', appearance:'運動風穿搭、短髮、背雙肩包、行動快速', img:GH+'%E5%90%B3%E5%AE%B6%E8%B1%AA.png'},
+  {name:'蔡怡君', dharma:'傳智', age:'48歲', gender:'女', role:'諮詢委員', classTime:'日間', classLevel:'研經班', lunch:'不要', merit:'莊嚴功德主', special:'一般信眾', appearance:'長髮低馬尾、圓框眼鏡、溫和笑容、配戴胸針', img:GH+'%E8%94%A1%E6%80%A1%E5%90%9B.png'},
+  {name:'楊政宏', dharma:'傳願', age:'28歲', gender:'男', role:'信眾',     classTime:'夜間', classLevel:'高級班', lunch:'要',   merit:'副總功德主', special:'一般信眾', appearance:'潮流髮型、運動鞋、棒球帽、年輕有活力', img:GH+'%E6%A5%8A%E6%94%BF%E5%AE%8F.png'},
+  {name:'許惠敏', dharma:'傳誠', age:'53歲', gender:'女', role:'信眾',     classTime:'日間', classLevel:'中級班', lunch:'只要湯', merit:'如意',     special:'客訴客戶', appearance:'大波浪捲髮、穿搭前衛、像吉普賽女郎的烈焰', img:GH+'%E8%A8%B1%E6%83%A0%E6%95%8F.png'},
+  {name:'鄭宗翰', dharma:'傳耕', age:'55歲', gender:'男', role:'副會長',   classTime:'夜間', classLevel:'初級班', lunch:'要',   merit:'吉祥',       special:'一般信眾', appearance:'胖宅男、短髮、鬍渣造型、偏好深色外套', img:GH+'%E9%84%AD%E5%AE%97%E7%BF%B0.png'},
+].map((c,i)=>({id:i, ...c}));
+
+const MERIT_ORDER = ['如意','吉祥','莊嚴功德主','副總功德主','總功德主']; // 低→高
+
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+function genCharacters(){ return FIXED_CHARS.map(c=>({...c})); }
+
+function classLabel(c){return c.classTime+c.classLevel;}
+function meritIdx(c){return MERIT_ORDER.indexOf(c.merit);}
+
+function avatarHtml(c, opts={}){
+  const face = `<div class="avatar-face"${opts.zoomOnly ? ` onclick="openLightbox('${c.img}', event)"` : ''}><img src="${c.img}" alt="" loading="lazy" onerror="this.remove();this.parentElement.textContent='🙂';"></div>`;
+  if(opts.zoomOnly) return face;
+  return face + `<button type="button" class="zoom-btn" onclick="openLightbox('${c.img}', event)" aria-label="放大照片">🔍</button>`;
+}
+
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightboxImg');
+function openLightbox(url, ev){
+  if(ev) ev.stopPropagation();
+  lightboxImg.src = url;
+  lightbox.classList.add('show');
+}
+function closeLightbox(){ lightbox.classList.remove('show'); lightboxImg.src=''; }
+lightbox.onclick = closeLightbox;
+
+/* ---------------- 背景音樂 ---------------- */
+const bgm = document.getElementById('bgm');
+const musicBtn = document.getElementById('musicBtn');
+let musicOn = false;
+function setMusicIcon(){ musicBtn.textContent = musicOn ? '🔊' : '🔈'; }
+function toggleMusic(){
+  if(musicOn){ bgm.pause(); musicOn=false; }
+  else { bgm.play().then(()=>{musicOn=true; setMusicIcon();}).catch(()=>{}); return; }
+  setMusicIcon();
+}
+// 多數瀏覽器需要使用者互動才能播放音效，嘗試在第一次點擊/按鍵時自動開始播放
+function tryAutoStart(){
+  if(!musicOn){
+    bgm.play().then(()=>{ musicOn=true; setMusicIcon(); }).catch(()=>{});
+  }
+  document.removeEventListener('click', tryAutoStart);
+  document.removeEventListener('keydown', tryAutoStart);
+}
+document.addEventListener('click', tryAutoStart, {once:true});
+document.addEventListener('keydown', tryAutoStart, {once:true});
+
+/* ---------------- 遊戲狀態 ---------------- */
+const game = {
+  chars: [],
+  order: [], // 洗牌後的顯示順序 (id list)
+  score: 0,
+  round: 0,
+  totalRounds: 8,
+  log: [], // true/false per round
+  bonusResults: [], // per bonus round summary
+  timer: null,
+};
+
+function resetGame(){
+  game.chars = genCharacters();
+  game.order = shuffle(game.chars.map(c=>c.id));
+  game.score = 0;
+  game.round = 0;
+  game.log = [];
+  game.bonusResults = [];
+}
+
+const app = document.getElementById('app');
+const flash = document.getElementById('flash');
+
+function showFlash(good, text){
+  flash.textContent = text;
+  flash.className = 'feedback-flash show ' + (good?'good':'bad');
+  setTimeout(()=>{flash.className='feedback-flash';}, 550);
+}
+
+function clearTimer(){ if(game.timer){ clearInterval(game.timer); game.timer=null; } }
+
+function runCountdown(seconds, onTick, onEnd){
+  clearTimer();
+  let remain = seconds;
+  onTick(remain, seconds);
+  game.timer = setInterval(()=>{
+    remain -= 0.1;
+    if(remain <= 0){
+      clearTimer();
+      onTick(0, seconds);
+      onEnd();
+    } else {
+      onTick(remain, seconds);
+    }
+  }, 100);
+}
+
+/* ---------------- 畫面：開始 ---------------- */
+function screenStart(){
+  app.innerHTML = `
+    <p class="lead">
+      這是「變身大挑戰」的線上訓練版：把信眾的<b>長相</b>與<b>資料</b>快速對應起來，
+      模擬客服人員在現場需要「看到人・聽到資訊・記住特徵・再次辨認」的真實情境。
+    </p>
+    <ul class="stage-list">
+      <li><span class="num">1</span><div><b>客戶變身</b>：快速瀏覽 12 位信眾的樣貌。</div></li>
+      <li><span class="num">2</span><div><b>自由交流</b>：詳讀每位信眾的完整資料卡。</div></li>
+      <li><span class="num">3</span><div><b>信眾重組</b>：所有人位置重新洗牌！</div></li>
+      <li><span class="num">4</span><div><b>真人配對賽</b>：主持人唸出資料，限時點出正確的人。</div></li>
+      <li><span class="num">5</span><div><b>VIP 搶救戰</b>：依條件限時找出所有符合的貴賓。</div></li>
+    </ul>
+    <div class="center"><button class="btn" onclick="startPhase1()">開始挑戰</button></div>
+  `;
+}
+
+/* ---------------- 畫面：Phase 1 客戶變身 ---------------- */
+function startPhase1(){
+  resetGame();
+  app.innerHTML = `
+    <div class="hud"><div class="stat">階段一・客戶變身</div><div class="stat">分數 <b>0</b></div></div>
+    <div class="timerbar-outer"><div class="timerbar-inner" id="bar" style="width:100%"></div></div>
+    <p class="lead">12 位信眾的樣貌已經出現，快記住每個人的<b>長相與外觀特徵</b>！（資料稍後才會出現，點頭像可放大看清楚）</p>
+    <div class="grid" id="grid"></div>
+  `;
+  const grid = document.getElementById('grid');
+  game.order.forEach(id=>{
+    const c = game.chars.find(x=>x.id===id);
+    const div = document.createElement('div');
+    div.className='avatar-card static';
+    div.innerHTML = avatarHtml(c, {zoomOnly:true});
+    grid.appendChild(div);
+  });
+  const bar = document.getElementById('bar');
+  runCountdown(20, (r,total)=>{ bar.style.width = (r/total*100)+'%'; bar.className='timerbar-inner'+(r<total*0.3?' warn':''); }, startPhase2);
+}
+
+/* ---------------- 畫面：Phase 2 自由交流 ---------------- */
+function startPhase2(){
+  app.innerHTML = `
+    <div class="hud"><div class="stat">階段二・自由交流</div><div class="stat">分數 <b>0</b></div></div>
+    <div class="timerbar-outer"><div class="timerbar-inner" id="bar" style="width:100%"></div></div>
+    <p class="lead">仔細閱讀每一位信眾的完整資料，等一下位置會重新排列，資料與長相才是辨認的關鍵！（點頭像可放大）</p>
+    <div class="profile-list" id="list"></div>
+  `;
+  const list = document.getElementById('list');
+  game.chars.forEach(c=>{
+    const div = document.createElement('div');
+    div.className='profile-card';
+    div.innerHTML = `
+      ${avatarHtml(c, {zoomOnly:true})}
+      <div class="profile-info">
+        <span class="name">${c.name}</span><span>（${c.dharma}）・${c.age}・${c.gender}</span>
+        ${c.special!=='一般信眾' ? `<span class="tag">${c.special}</span>` : ''}<br>
+        執事：${c.role}｜班別：${classLabel(c)}<br>
+        便當：${c.lunch}｜發心：${c.merit}<br>
+        特徵：${c.appearance}
+      </div>`;
+    list.appendChild(div);
+  });
+  const bar = document.getElementById('bar');
+  runCountdown(180, (r,total)=>{ bar.style.width=(r/total*100)+'%'; bar.className='timerbar-inner'+(r<total*0.3?' warn':''); }, startPhase3);
+}
+
+/* ---------------- 畫面：Phase 3 信眾重組 ---------------- */
+function startPhase3(){
+  game.order = shuffle(game.chars.map(c=>c.id));
+  app.innerHTML = `
+    <div class="hud"><div class="stat">階段三・信眾重組</div><div class="stat">分數 <b>0</b></div></div>
+    <p class="lead center">所有人重新排列位置中…<br>準備好進入「真人配對賽」。</p>
+    <div class="center" id="cd" style="font-family:'Noto Serif TC',serif;font-size:54px;color:var(--vermilion);margin:24px 0;">3</div>
+  `;
+  let n=3;
+  const cd = document.getElementById('cd');
+  const iv = setInterval(()=>{
+    n--;
+    if(n<=0){ clearInterval(iv); startPhase4(); }
+    else cd.textContent = n;
+  },800);
+}
+
+/* ---------------- 畫面：Phase 4a 真人配對賽 ---------------- */
+function clueForChar(c){
+  const parts = [
+    `${c.name}`,
+    `${c.dharma}`,
+    `${c.role}`,
+    `${classLabel(c)}`,
+    `便當${c.lunch}`,
+    `發心${c.merit}`
+  ];
+  // 隨機省略 1~2 項以調整難度（姓名一律保留，才能對應到記憶）
+  const keepIdx = new Set([0]);
+  while(keepIdx.size < 4 + Math.floor(Math.random()*2)) keepIdx.add(Math.floor(Math.random()*parts.length));
+  const shown = parts.filter((_,i)=>keepIdx.has(i));
+  return shown.join('，') + '。';
+}
+
+function startPhase4(){
+  game.round = 0;
+  nextRound4();
+}
+
+function updateScoreHud(){
+  const el = document.querySelector('.hud .stat:last-child b');
+  if(el) el.textContent = game.score;
+}
+
+function nextRound4(){
+  if(game.round >= game.totalRounds){ startPhase4b(); return; }
+  game.round++;
+  const target = pick(game.chars);
+  const clue = clueForChar(target);
+  const startedAt = Date.now();
+
+  app.innerHTML = `
+    <div class="hud"><div class="stat">階段四・真人配對賽（${game.round}/${game.totalRounds}）</div><div class="stat">分數 <b>${game.score}</b></div></div>
+    <div class="round-log">${game.log.map(ok=>`<span class="${ok?'ok':'no'}">${ok?'✓':'✕'}</span>`).join('')}</div>
+    <div class="clue-box"><div class="role-eyebrow">主持人宣布</div>「${clue}」</div>
+    <div class="timerbar-outer"><div class="timerbar-inner" id="bar" style="width:100%"></div></div>
+    <div class="grid" id="grid"></div>
+  `;
+  const grid = document.getElementById('grid');
+  game.order.forEach(id=>{
+    const c = game.chars.find(x=>x.id===id);
+    const div = document.createElement('div');
+    div.className='avatar-card';
+    div.innerHTML = avatarHtml(c);
+    div.onclick = ()=>answer4(c.id===target.id, div, target, startedAt);
+    grid.appendChild(div);
+  });
+  const bar = document.getElementById('bar');
+  runCountdown(15, (r,total)=>{ bar.style.width=(r/total*100)+'%'; bar.className='timerbar-inner'+(r<total*0.3?' warn':''); }, ()=>answer4(false,null,target,startedAt));
+}
+
+let round4Locked=false;
+function answer4(correct, div, target, startedAt){
+  if(round4Locked) return;
+  round4Locked = true;
+  clearTimer();
+  const elapsed = (Date.now()-startedAt)/1000;
+  let gained = 0;
+  if(correct){
+    gained = 10 + (elapsed<=4 ? 5 : 0);
+    showFlash(true, elapsed<=4 ? '答對！+15' : '答對！+10');
+    if(div) div.classList.add('correct');
+  } else {
+    showFlash(false, '沒找對人');
+    if(div) div.classList.add('wrong');
+    // 標出正確答案
+    document.querySelectorAll('.avatar-card').forEach((el,i)=>{
+      if(game.order[i]===target.id) el.classList.add('correct');
+    });
+  }
+  game.score += gained;
+  game.log.push(correct);
+  updateScoreHud();
+  setTimeout(()=>{ round4Locked=false; nextRound4(); }, 900);
+}
+
+/* ---------------- 畫面：Phase 4b VIP搶救戰 ---------------- */
+const BONUS_ROUNDS = [
+  {
+    text:'請在時間內找出所有「吉祥」以上功德主！',
+    match:c=>meritIdx(c)>=MERIT_ORDER.indexOf('吉祥')
+  },
+  {
+    text:'請在時間內找出所有「日間高級班」的學員！',
+    match:c=>c.classTime==='日間' && c.classLevel==='高級班'
+  },
+  {
+    text:'請在時間內找出所有 貴賓／VIP神秘客！',
+    match:c=>c.special==='貴賓' || c.special==='VIP神秘客'
+  }
+];
+
+function startPhase4b(){
+  game.bonusIdx = 0;
+  nextBonusRound();
+}
+
+function nextBonusRound(){
+  if(game.bonusIdx >= 2){ // 只跑兩輪
+    return showEnd();
+  }
+  const roundDef = pick(shuffle(BONUS_ROUNDS));
+  game.currentBonus = roundDef;
+  game.selected = new Set();
+
+  app.innerHTML = `
+    <div class="hud"><div class="stat">階段五・VIP搶救戰（${game.bonusIdx+1}/2）</div><div class="stat">分數 <b>${game.score}</b></div></div>
+    <div class="clue-box"><div class="role-eyebrow">主持人宣布</div>${roundDef.text}</div>
+    <div class="timerbar-outer"><div class="timerbar-inner" id="bar" style="width:100%"></div></div>
+    <div class="grid" id="grid"></div>
+    <div class="btnbar"><button class="btn jade" id="submitBtn">送出名單</button></div>
+    <p class="mini-note center">點選卡片可複選／取消，時間到會自動送出。</p>
+  `;
+  const grid = document.getElementById('grid');
+  game.order.forEach(id=>{
+    const c = game.chars.find(x=>x.id===id);
+    const div = document.createElement('div');
+    div.className='avatar-card';
+    div.dataset.id = c.id;
+    div.innerHTML = avatarHtml(c);
+    div.onclick = ()=>{
+      if(game.selected.has(c.id)){ game.selected.delete(c.id); div.classList.remove('selected'); }
+      else { game.selected.add(c.id); div.classList.add('selected'); }
+    };
+    grid.appendChild(div);
+  });
+  document.getElementById('submitBtn').onclick = ()=>finishBonus(roundDef);
+  const bar = document.getElementById('bar');
+  runCountdown(25, (r,total)=>{ bar.style.width=(r/total*100)+'%'; bar.className='timerbar-inner'+(r<total*0.3?' warn':''); }, ()=>finishBonus(roundDef));
+}
+
+function finishBonus(roundDef){
+  clearTimer();
+  const correctIds = new Set(game.chars.filter(roundDef.match).map(c=>c.id));
+  let gained = 0, right=0, wrong=0;
+  document.querySelectorAll('.avatar-card').forEach(div=>{
+    const id = Number(div.dataset.id);
+    const isCorrect = correctIds.has(id);
+    const isSelected = game.selected.has(id);
+    if(isSelected && isCorrect){ gained += 10; right++; div.classList.add('correct'); }
+    else if(isSelected && !isCorrect){ gained -= 5; wrong++; div.classList.add('wrong'); }
+    else if(!isSelected && isCorrect){ div.classList.add('correct'); }
+  });
+  gained = Math.max(0, gained);
+  game.score += gained;
+  game.bonusResults.push({right, wrong, total: correctIds.size, gained});
+  updateScoreHud();
+  showFlash(gained>0, `+${gained} 分`);
+  game.bonusIdx++;
+  setTimeout(nextBonusRound, 1300);
+}
+
+/* ---------------- 畫面：結算 ---------------- */
+function rankTitle(score){
+  if(score>=140) return '特級客服王・過目不忘';
+  if(score>=100) return '資深客服・眼明手快';
+  if(score>=60) return '合格客服・穩紮穩打';
+  return '見習客服・仍需修煉';
+}
+
+function showEnd(){
+  const correctCount = game.log.filter(Boolean).length;
+  app.innerHTML = `
+    <div class="center">
+      <div class="hud" style="justify-content:center;"><div class="stat">挑戰結算</div></div>
+      <div class="score-huge">${game.score}</div>
+      <div class="rank-badge">${rankTitle(game.score)}</div>
+      <div class="divider"></div>
+      <p class="lead">真人配對賽答對 ${correctCount} / ${game.totalRounds} 題</p>
+      <div class="round-log">${game.log.map(ok=>`<span class="${ok?'ok':'no'}">${ok?'✓':'✕'}</span>`).join('')}</div>
+      <p class="lead">VIP 搶救戰共找出 ${game.bonusResults.reduce((s,r)=>s+r.right,0)} / ${game.bonusResults.reduce((s,r)=>s+r.total,0)} 位貴賓</p>
+      <div class="btnbar">
+        <button class="btn" onclick="startPhase1()">再挑戰一次</button>
+        <button class="btn ghost" onclick="screenStart()">回到說明頁</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ---------------- 啟動 ---------------- */
+screenStart();
+</script>
+</body>
+</html>
