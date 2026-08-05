@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>團員通行證 · 行程報名與點名系統</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --ink:#1E2A32;
+    --ink-soft:#4B5A62;
+    --paper:#EEF1EC;
+    --surface:#FFFFFF;
+    --surface-alt:#E3E8E0;
+    --gold:#B98A2E;
+    --gold-deep:#8C6A22;
+    --red:#A6402F;
+    --line:#C7CDBF;
+    --green:#3E6B4F;
+    --radius:14px;
+    --font-display:'Noto Serif TC', serif;
+    --font-body:'Noto Sans TC', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:var(--font-body);
+    background:var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:20px 16px 80px;}
+
+  header.top{
+    display:flex;flex-direction:column;gap:4px;
+    padding:22px 4px 18px;
+    border-bottom:2px solid var(--ink);
+    margin-bottom:18px;
+  }
+  header.top .eyebrow{
+    font-family:var(--font-mono);
+    font-size:11px;letter-spacing:.18em;
+    color:var(--gold-deep);text-transform:uppercase;
+  }
+  header.top h1{
+    font-family:var(--font-display);
+    font-weight:900;
+    font-size:clamp(24px,5vw,34px);
+    margin:0;
+    letter-spacing:.02em;
+  }
+  header.top .sub{color:var(--ink-soft);font-size:13.5px;}
+
+  nav.tabs{
+    display:flex;flex-wrap:wrap;gap:6px;
+    margin-bottom:22px;
+    border-bottom:1px dashed var(--line);
+    padding-bottom:10px;
+  }
+  nav.tabs button{
+    font-family:var(--font-body);
+    font-weight:700;font-size:13.5px;
+    padding:9px 16px;
+    border-radius:999px;
+    border:1.5px solid var(--ink);
+    background:transparent;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  nav.tabs button.active{
+    background:var(--ink);color:var(--paper);
+  }
+  nav.tabs button:hover:not(.active){background:var(--surface-alt);}
+
+  h2.section-title{
+    font-family:var(--font-display);font-weight:700;
+    font-size:20px;margin:0 0 4px;
+  }
+  p.section-hint{color:var(--ink-soft);font-size:13px;margin:0 0 16px;}
+
+  /* boarding-pass style card */
+  .pass{
+    background:var(--surface);
+    border-radius:var(--radius);
+    border:1.5px solid var(--ink);
+    padding:16px 18px;
+    margin-bottom:14px;
+    position:relative;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:14px;
+    flex-wrap:wrap;
+  }
+  .pass::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:6px;
+    background:repeating-linear-gradient(180deg, var(--gold) 0 8px, transparent 8px 14px);
+    border-radius:var(--radius) 0 0 var(--radius);
+  }
+  .pass .pass-main{padding-left:8px;flex:1;min-width:180px;}
+  .pass .pass-name{font-family:var(--font-display);font-weight:700;font-size:17px;}
+  .pass .pass-meta{
+    font-family:var(--font-mono);font-size:12.5px;color:var(--ink-soft);
+    margin-top:4px;display:flex;gap:14px;flex-wrap:wrap;
+  }
+  .pass .pass-count{
+    font-family:var(--font-mono);font-size:12px;color:var(--gold-deep);margin-top:6px;
+  }
+  .pass .pass-actions{display:flex;gap:6px;}
+
+  .btn{
+    font-family:var(--font-body);font-weight:700;font-size:12.5px;
+    padding:7px 13px;border-radius:8px;border:1.5px solid var(--ink);
+    background:var(--surface);color:var(--ink);cursor:pointer;
+  }
+  .btn:hover{background:var(--surface-alt);}
+  .btn.primary{background:var(--ink);color:var(--paper);}
+  .btn.primary:hover{background:#050b10;}
+  .btn.danger{border-color:var(--red);color:var(--red);}
+  .btn.danger:hover{background:#f6e6e3;}
+  .btn.small{padding:5px 10px;font-size:11.5px;}
+
+  form.card-form{
+    background:var(--surface);border:1.5px solid var(--ink);border-radius:var(--radius);
+    padding:18px;margin-bottom:20px;
+  }
+  .field{margin-bottom:13px;}
+  .field label{display:block;font-weight:700;font-size:13px;margin-bottom:5px;}
+  .field .hint{font-weight:400;color:var(--ink-soft);font-size:11.5px;}
+  input[type=text],input[type=tel],input[type=date],input[type=time],input[type=number],input[type=password],select,textarea{
+    width:100%;font-family:var(--font-body);font-size:14px;
+    padding:9px 11px;border-radius:8px;border:1.5px solid var(--line);
+    background:var(--paper);color:var(--ink);
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:1px;}
+  .row2{display:flex;gap:12px;flex-wrap:wrap;}
+  .row2 > .field{flex:1;min-width:140px;}
+
+  .itin-check-list{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+  .itin-check{
+    display:flex;align-items:center;gap:10px;
+    border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;
+    background:var(--paper);
+  }
+  .itin-check input{width:auto;}
+  .itin-check .ic-name{font-weight:700;font-size:13.5px;flex:1;}
+  .itin-check .ic-meta{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-soft);}
+
+  .empty{
+    border:1.5px dashed var(--line);border-radius:var(--radius);
+    padding:26px;text-align:center;color:var(--ink-soft);font-size:13.5px;
+  }
+
+  table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--ink);}
+  th,td{text-align:left;padding:10px 12px;font-size:13px;border-bottom:1px solid var(--line);}
+  th{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);background:var(--surface-alt);}
+  tr:last-child td{border-bottom:none;}
+  .badge{
+    display:inline-block;font-family:var(--font-mono);font-size:11px;
+    padding:2px 8px;border-radius:999px;background:var(--surface-alt);
+    margin:1px 3px 1px 0;border:1px solid var(--line);
+  }
+
+  .rollcall-row{
+    display:flex;align-items:center;gap:12px;
+    background:var(--surface);border:1.5px solid var(--line);border-radius:10px;
+    padding:11px 14px;margin-bottom:8px;position:relative;overflow:hidden;
+  }
+  .rollcall-row.checked{border-color:var(--green);}
+  .rollcall-row .rc-name{font-weight:700;font-size:14px;flex:1;}
+  .rollcall-row .rc-time{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-soft);}
+  .stamp{
+    font-family:var(--font-display);font-weight:900;font-size:12px;
+    color:var(--red);border:2px solid var(--red);border-radius:6px;
+    padding:2px 8px;transform:rotate(-8deg);letter-spacing:.05em;
+  }
+  .checkbtn{
+    width:26px;height:26px;border-radius:50%;border:2px solid var(--ink);
+    background:var(--surface);cursor:pointer;flex-shrink:0;
+  }
+  .checkbtn.on{background:var(--green);border-color:var(--green);}
+
+  .search-bar{margin-bottom:14px;}
+  .toast{
+    position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:var(--paper);padding:9px 18px;border-radius:999px;
+    font-size:13px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;
+    z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+
+  .room-card{background:var(--surface);border:1.5px solid var(--ink);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;}
+  .room-card .rc-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+  .room-card .rc-title{font-family:var(--font-display);font-weight:700;font-size:16px;}
+  .room-card .rc-cap{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);}
+  .room-members{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .room-members .pill{
+    display:flex;align-items:center;gap:6px;background:var(--surface-alt);
+    border-radius:999px;padding:4px 10px 4px 12px;font-size:12.5px;
+  }
+  .room-members .pill button{border:none;background:none;color:var(--red);cursor:pointer;font-weight:900;}
+  select.assign-select{margin-top:10px;}
+
+  @media (max-width:520px){
+    .pass{flex-direction:column;}
+    th,td{font-size:12px;padding:8px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">TOUR PASS · 行程通行證</div>
+    <h1>團員通行證</h1>
+    <div class="sub">行程報名・點名報到・房間分配 — 一站完成</div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="register" class="active">✎ 團員報名</button>
+    <button data-tab="myinfo">🔑 我的行程</button>
+    <button data-tab="itineraries">📋 行程管理</button>
+    <button data-tab="rollcall">🔖 點名</button>
+    <button data-tab="rooms">🛏 寮房分配</button>
+    <button data-tab="overview">📖 總覽</button>
+  </nav>
+
+  <main id="app"></main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- state ---------- */
+/* 請將下面兩個值換成你部署 Apps Script 後拿到的網址與密鑰 */
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0ZqprejfJ1ZvLqe3CcPmgiBFt3MupTRKEOd3KQFL8dP3PLkVKLRvLcubwK60Qrm6VkA/exec'; // 例如 https://script.google.com/macros/s/xxxx/exec
+const API_KEY = 'creativegrandentrance'; // 需與 Apps Script 專案設定中的 API_KEY 一致
+
+let state = { itineraries: [], members: [], rooms: [] };
+let currentTab = 'register';
+let editingItinId = null;
+let editingRoomId = null;
+let editingMemberId = null;
+let rollcallItinId = null;
+let rollcallFilter = '';
+let myInfoId = null;
+let myInfoError = '';
+let qrVisibleItinId = null;
+let checkinTargetId = null;
+let checkinMatchedMemberId = null;
+let checkinError = '';
+(function initFromUrl(){
+  const params = new URLSearchParams(location.search);
+  const cid = params.get('checkin');
+  if(cid){ currentTab = 'checkin'; checkinTargetId = cid; }
+})();
+
+function uid(){ return Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4); }
+
+async function loadState(){
+  try{
+    const res = await fetch(`${APPS_SCRIPT_URL}?key=${encodeURIComponent(API_KEY)}`);
+    const json = await res.json();
+    if(json.error){ showToast('讀取失敗：' + json.error); }
+    else if(json.data){ state = JSON.parse(json.data); }
+  }catch(e){
+    showToast('無法連線到資料庫，請檢查網路連線與設定的網址');
+  }
+  render();
+}
+async function saveState(){
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 避免觸發 CORS 預檢請求
+      body: JSON.stringify({ key: API_KEY, data: JSON.stringify(state) })
+    });
+    const json = await res.json();
+    if(json.error){ showToast('儲存失敗：' + json.error); }
+  }catch(e){
+    showToast('儲存失敗，請檢查網路連線');
+  }
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._h);
+  showToast._h = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+/* ---------- helpers ---------- */
+function itinById(id){ return state.itineraries.find(i=>i.id===id); }
+function memberById(id){ return state.members.find(m=>m.id===id); }
+function roomById(id){ return state.rooms.find(r=>r.id===id); }
+function fmtDate(d,t){
+  if(!d && !t) return '日期未定';
+  return [d,t].filter(Boolean).join(' ');
+}
+function esc(s){
+  return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- render dispatch ---------- */
+function render(){
+  document.querySelectorAll('#tabs button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tab === currentTab);
+  });
+  document.getElementById('tabs').style.display = currentTab === 'checkin' ? 'none' : 'flex';
+  const app = document.getElementById('app');
+  if(currentTab==='register') app.innerHTML = renderRegister();
+  else if(currentTab==='myinfo') app.innerHTML = renderMyInfo();
+  else if(currentTab==='itineraries'){ app.innerHTML = renderItineraries(); mountItinQR(); }
+  else if(currentTab==='rollcall'){ app.innerHTML = renderRollcall(); mountRollcallQR(); }
+  else if(currentTab==='rooms') app.innerHTML = renderRooms();
+  else if(currentTab==='overview') app.innerHTML = renderOverview();
+  else if(currentTab==='checkin') app.innerHTML = renderCheckin();
+}
+
+function checkinUrl(itinId){
+  const base = location.origin + location.pathname;
+  return base + '?checkin=' + encodeURIComponent(itinId);
+}
+function mountQR(elId, itinId, size){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = '';
+  try{
+    new QRCode(el, { text: checkinUrl(itinId), width:size, height:size, colorDark:'#1E2A32', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  }catch(e){
+    el.innerHTML = `<p class="section-hint" style="text-align:center;">QRCode 載入失敗，請直接分享連結：<br><span style="font-family:var(--font-mono);word-break:break-all;">${esc(checkinUrl(itinId))}</span></p>`;
+  }
+}
+function mountRollcallQR(){ if(rollcallItinId) mountQR('rollcall-qr-code', rollcallItinId, 190); }
+function mountItinQR(){ if(qrVisibleItinId) mountQR('itin-qr-'+qrVisibleItinId, qrVisibleItinId, 150); }
+
+/* ---------- REGISTER TAB ---------- */
+function renderRegister(){
+  const itinList = state.itineraries.length ? state.itineraries.map(it => `
+    <label class="itin-check">
+      <input type="checkbox" name="itin" value="${it.id}">
+      <span class="ic-name">${esc(it.name)}</span>
+      <span class="ic-meta">${esc(fmtDate(it.date,it.time))} ・ 點名 ${esc(it.rollCallTime||'—')}</span>
+    </label>
+  `).join('') : `<div class="empty">尚未建立任何行程，請導遊先至「行程管理」新增。</div>`;
+
+  const recent = state.members.slice(-6).reverse().map(m => `
+    <tr>
+      <td>${esc(m.name)}</td>
+      <td>${m.itineraryIds.map(id=>{const it=itinById(id);return it?`<span class="badge">${esc(it.name)}</span>`:'';}).join('')}</td>
+    </tr>
+  `).join('');
+
+  return `
+    <h2 class="section-title">團員報名</h2>
+    <p class="section-hint">請填寫姓名並勾選您參加的行程（可全選，也可只選部分行程）。</p>
+    <form class="card-form" data-form="register">
+      <div class="row2">
+        <div class="field">
+          <label>姓名 *</label>
+          <input type="text" name="name" required placeholder="王小明">
+        </div>
+        <div class="field">
+          <label>聯絡電話 * <span class="hint">（手機號碼後4碼將作為「我的行程」查詢密碼）</span></label>
+          <input type="tel" name="phone" required minlength="4" placeholder="09xx-xxx-xxx">
+        </div>
+      </div>
+      <div class="field">
+        <label>備註 <span class="hint">（飲食禁忌、特殊需求等，選填）</span></label>
+        <input type="text" name="note" placeholder="例如：與誰同寮">
+      </div>
+      <div class="field">
+        <label>參加行程 *</label>
+        <div class="itin-check-list">${itinList}</div>
+      </div>
+      <button class="btn primary" type="submit" ${state.itineraries.length?'':'disabled'}>完成報名</button>
+    </form>
+    ${state.members.length ? `
+      <h2 class="section-title">最近報名</h2>
+      <table><thead><tr><th>姓名</th><th>行程</th></tr></thead><tbody>${recent}</tbody></table>
+    ` : ''}
+  `;
+}
+
+/* ---------- MY INFO TAB ---------- */
+function renderMyInfo(){
+  const m = myInfoId ? memberById(myInfoId) : null;
+
+  if(!m){
+    return `
+      <h2 class="section-title">我的行程</h2>
+      <p class="section-hint">輸入報名時填寫的姓名，以及手機號碼「後4碼」作為密碼即可查詢。</p>
+      <form class="card-form" data-form="myinfo-login">
+        <div class="row2">
+          <div class="field"><label>姓名</label><input type="text" name="name" required placeholder="王小明"></div>
+          <div class="field"><label>密碼（手機後4碼）</label><input type="password" name="pass" inputmode="numeric" maxlength="4" required placeholder="1234"></div>
+        </div>
+        ${myInfoError ? `<p class="section-hint" style="color:var(--red);">${esc(myInfoError)}</p>` : ''}
+        <button class="btn primary" type="submit">查詢我的行程</button>
+      </form>
+    `;
+  }
+
+  const itinCards = m.itineraryIds.map(id=>{
+    const it = itinById(id);
+    if(!it) return '';
+    const ci = (m.checkins && m.checkins[id]) || {checked:false, time:null};
+    return `
+      <div class="pass">
+        <div class="pass-main">
+          <div class="pass-name">${esc(it.name)}</div>
+          <div class="pass-meta">
+            <span>📅 ${esc(fmtDate(it.date,it.time))}</span>
+            <span>🔖 點名 ${esc(it.rollCallTime||'—')}</span>
+            ${it.location?`<span>📍 ${esc(it.location)}</span>`:''}
+          </div>
+        </div>
+        ${ci.checked ? `<span class="stamp">已報到 ${esc(ci.time||'')}</span>` : `<span class="badge">尚未報到</span>`}
+      </div>
+    `;
+  }).join('') || `<div class="empty">尚未報名任何行程。</div>`;
+
+  return `
+    <h2 class="section-title">你好，${esc(m.name)}</h2>
+    <p class="section-hint">寮房：${m.room ? '房 '+esc(roomLabel(m.room)) : '尚未分配'}</p>
+    ${itinCards}
+    <button class="btn" data-action="myinfo-logout">登出</button>
+  `;
+}
+
+/* ---------- QR CHECK-IN PAGE ---------- */
+function renderCheckin(){
+  const it = itinById(checkinTargetId);
+  if(!it){
+    return `
+      <div style="text-align:center;padding:60px 10px;">
+        <h2 class="section-title">找不到此行程</h2>
+        <p class="section-hint">這個 QRCode 連結可能已失效，請聯繫領隊確認。</p>
+      </div>
+    `;
+  }
+  if(checkinMatchedMemberId){
+    const m = memberById(checkinMatchedMemberId);
+    const ci = (m && m.checkins && m.checkins[checkinTargetId]) || {};
+    return `
+      <div style="text-align:center;padding:40px 10px;">
+        <div class="stamp" style="font-size:20px;padding:10px 22px;display:inline-block;">已報到</div>
+        <h2 class="section-title" style="margin-top:16px;">${esc(m.name)}，歡迎！</h2>
+        <p class="section-hint">${esc(it.name)} ・ 報到時間 ${esc(ci.time||'')}</p>
+        <button class="btn primary" data-action="checkin-goto-myinfo" data-id="${m.id}">查看我的完整行程</button>
+      </div>
+    `;
+  }
+  return `
+    <div style="max-width:420px;margin:30px auto 0;">
+      <h2 class="section-title" style="text-align:center;">${esc(it.name)}</h2>
+      <p class="section-hint" style="text-align:center;">點名時間 ${esc(it.rollCallTime||'—')} ・ 請輸入姓名與手機後4碼完成報到</p>
+      <form class="card-form" data-form="checkin-submit">
+        <div class="field"><label>姓名</label><input type="text" name="name" required placeholder="王小明"></div>
+        <div class="field"><label>手機後4碼</label><input type="password" name="pass" inputmode="numeric" maxlength="4" required placeholder="1234"></div>
+        ${checkinError ? `<p class="section-hint" style="color:var(--red);">${esc(checkinError)}</p>` : ''}
+        <button class="btn primary" type="submit">完成報到</button>
+      </form>
+    </div>
+  `;
+}
+
+/* ---------- ITINERARIES TAB ---------- */
+function renderItineraries(){
+  const form = `
+    <form class="card-form" data-form="itinerary">
+      <div class="row2">
+        <div class="field"><label>行程名稱 *</label><input type="text" name="name" required placeholder="第一天：巡禮"></div>
+        <div class="field"><label>日期</label><input type="date" name="date"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>集合／出發時間</label><input type="time" name="time"></div>
+        <div class="field"><label>點名時間 *</label><input type="time" name="rollCallTime" required></div>
+      </div>
+      <div class="field"><label>地點 <span class="hint">（選填）</span></label><input type="text" name="location" placeholder="一樓"></div>
+      <button class="btn primary" type="submit">新增行程</button>
+    </form>
+  `;
+  const list = state.itineraries.map(it => {
+    if(editingItinId === it.id){
+      return `
+        <form class="card-form" data-form="itinerary-edit" data-id="${it.id}">
+          <div class="row2">
+            <div class="field"><label>行程名稱</label><input type="text" name="name" required value="${esc(it.name)}"></div>
+            <div class="field"><label>日期</label><input type="date" name="date" value="${esc(it.date||'')}"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>集合／出發時間</label><input type="time" name="time" value="${esc(it.time||'')}"></div>
+            <div class="field"><label>點名時間</label><input type="time" name="rollCallTime" required value="${esc(it.rollCallTime||'')}"></div>
+          </div>
+          <div class="field"><label>地點</label><input type="text" name="location" value="${esc(it.location||'')}"></div>
+          <div class="pass-actions">
+            <button class="btn primary" type="submit">儲存</button>
+            <button class="btn" type="button" data-action="cancel-edit-itin">取消</button>
+          </div>
+        </form>
+      `;
+    }
+    const count = state.members.filter(m=>m.itineraryIds.includes(it.id)).length;
+    const qrOpen = qrVisibleItinId === it.id;
+    return `
+      <div class="pass" style="${qrOpen?'flex-direction:column;':''}">
+        <div class="pass-main">
+          <div class="pass-name">${esc(it.name)}</div>
+          <div class="pass-meta">
+            <span>📅 ${esc(fmtDate(it.date,it.time))}</span>
+            <span>🔖 點名 ${esc(it.rollCallTime||'—')}</span>
+            ${it.location?`<span>📍 ${esc(it.location)}</span>`:''}
+          </div>
+          <div class="pass-count">${count} 位團員參加</div>
+        </div>
+        <div class="pass-actions">
+          <button class="btn small" data-action="toggle-itin-qr" data-id="${it.id}">${qrOpen?'隱藏 QRCode':'📱 QRCode'}</button>
+          <button class="btn small" data-action="edit-itin" data-id="${it.id}">編輯</button>
+          <button class="btn small danger" data-action="delete-itin" data-id="${it.id}">刪除</button>
+        </div>
+        ${qrOpen ? `
+          <div style="width:100%;text-align:center;padding-top:12px;margin-top:4px;border-top:1px dashed var(--line);">
+            <div id="itin-qr-${it.id}" style="display:flex;justify-content:center;"></div>
+            <p class="section-hint" style="margin:8px 0 0;">團員掃描後將開啟此行程的線上點名頁</p>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('') || `<div class="empty">尚未建立行程，請於上方表單新增。</div>`;
+
+  return `
+    <h2 class="section-title">行程管理</h2>
+    <p class="section-hint">建立每一段行程，包含名稱、時間與點名時間，團員報名時即可勾選。</p>
+    ${form}
+    ${list}
+  `;
+}
+
+/* ---------- ROLLCALL TAB ---------- */
+function renderRollcall(){
+  if(!rollcallItinId && state.itineraries.length) rollcallItinId = state.itineraries[0].id;
+  const picker = state.itineraries.map(it => `<option value="${it.id}" ${it.id===rollcallItinId?'selected':''}>${esc(it.name)}（點名 ${esc(it.rollCallTime||'—')}）</option>`).join('');
+
+  if(!state.itineraries.length){
+    return `<h2 class="section-title">點名</h2><div class="empty">尚未建立行程，請先至「行程管理」新增。</div>`;
+  }
+
+  const it = itinById(rollcallItinId);
+  let members = state.members.filter(m=>m.itineraryIds.includes(rollcallItinId));
+  if(rollcallFilter.trim()){
+    const q = rollcallFilter.trim();
+    members = members.filter(m=>m.name.includes(q));
+  }
+  const checkedCount = state.members.filter(m=>m.itineraryIds.includes(rollcallItinId) && m.checkins && m.checkins[rollcallItinId] && m.checkins[rollcallItinId].checked).length;
+  const total = state.members.filter(m=>m.itineraryIds.includes(rollcallItinId)).length;
+
+  const rows = members.map(m=>{
+    const ci = (m.checkins && m.checkins[rollcallItinId]) || {checked:false, time:null};
+    return `
+      <div class="rollcall-row ${ci.checked?'checked':''}">
+        <button class="checkbtn ${ci.checked?'on':''}" data-action="toggle-checkin" data-member="${m.id}" data-itin="${rollcallItinId}" aria-label="點名"></button>
+        <div class="rc-name">${esc(m.name)}${m.room?` <span class="rc-time">（房 ${esc(roomLabel(m.room))}）</span>`:''}</div>
+        ${ci.checked ? `<span class="stamp">已報到</span><span class="rc-time">${esc(ci.time||'')}</span>` : `<span class="rc-time">尚未報到</span>`}
+      </div>
+    `;
+  }).join('') || `<div class="empty">此行程尚無報名團員。</div>`;
+
+  return `
+    <h2 class="section-title">點名 — ${it?esc(it.name):''}</h2>
+    <p class="section-hint">目前 ${checkedCount} / ${total} 人已報到。</p>
+    <div class="field">
+      <label>選擇行程</label>
+      <select data-action="select-rollcall-itin">${picker}</select>
+    </div>
+    <div class="pass" style="justify-content:center;">
+      <div style="text-align:center;width:100%;">
+        <div id="rollcall-qr-code" style="display:flex;justify-content:center;margin:4px 0;"></div>
+        <p class="section-hint" style="margin:10px 0 0;">請團員使用手機相機掃描此 QRCode，輸入姓名與手機後4碼即完成報到</p>
+      </div>
+    </div>
+    <h2 class="section-title" style="font-size:16px;margin-top:22px;">或由領隊手動點名</h2>
+    <div class="field search-bar">
+      <label>搜尋姓名</label>
+      <input type="text" data-action="filter-rollcall" value="${esc(rollcallFilter)}" placeholder="輸入姓名篩選">
+    </div>
+    ${rows}
+  `;
+}
+function roomLabel(roomId){
+  const r = roomById(roomId);
+  return r ? r.roomNumber : '';
+}
+
+/* ---------- ROOMS TAB ---------- */
+function renderRooms(){
+  const form = `
+    <form class="card-form" data-form="room">
+      <div class="row2">
+        <div class="field"><label>房號 *</label><input type="text" name="roomNumber" required placeholder="301"></div>
+        <div class="field"><label>房型</label><input type="text" name="type" placeholder="雙人房"></div>
+        <div class="field"><label>可住人數</label><input type="number" name="capacity" min="1" value="2"></div>
+      </div>
+      <button class="btn primary" type="submit">新增寮房</button>
+    </form>
+  `;
+  const unassigned = state.members.filter(m=>!m.room);
+  const list = state.rooms.map(r=>{
+    const occupants = state.members.filter(m=>m.room===r.id);
+    const options = unassigned.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');
+    return `
+      <div class="room-card">
+        <div class="rc-head">
+          <div class="rc-title">房 ${esc(r.roomNumber)} ${r.type?`· ${esc(r.type)}`:''}</div>
+          <div class="rc-cap">${occupants.length} / ${r.capacity||'?'} 人</div>
+          <button class="btn small danger" data-action="delete-room" data-id="${r.id}">刪除房間</button>
+        </div>
+        <div class="room-members">
+          ${occupants.map(m=>`<span class="pill">${esc(m.name)} <button data-action="unassign-room" data-member="${m.id}" title="移出">×</button></span>`).join('') || '<span class="rc-cap">尚無入住團員</span>'}
+        </div>
+        ${unassigned.length ? `
+          <select class="assign-select" data-action="assign-room" data-room="${r.id}">
+            <option value="">＋ 加入團員…</option>
+            ${options}
+          </select>
+        ` : ''}
+      </div>
+    `;
+  }).join('') || `<div class="empty">尚未建立房間，請於上方表單新增。</div>`;
+
+  const unassignedList = unassigned.length ? `
+    <h2 class="section-title">未分配團員</h2>
+    <div class="room-members" style="margin-bottom:20px;">
+      ${unassigned.map(m=>`<span class="pill">${esc(m.name)}</span>`).join('')}
+    </div>
+  ` : '';
+
+  return `
+    <h2 class="section-title">寮房分配</h2>
+    <p class="section-hint">建立房間後，於各房卡片下方選單加入團員；點擊姓名旁「×」可移出房間。</p>
+    ${form}
+    ${list}
+    ${unassignedList}
+  `;
+}
+
+/* ---------- OVERVIEW TAB ---------- */
+function renderOverview(){
+  if(!state.members.length) return `<h2 class="section-title">總覽</h2><div class="empty">尚無報名團員。</div>`;
+  const rows = state.members.map(m=>{
+    const itins = m.itineraryIds.map(id=>{
+      const it = itinById(id);
+      if(!it) return '';
+      const ci = (m.checkins && m.checkins[id]) || {checked:false};
+      return `<span class="badge">${esc(it.name)}${ci.checked?' ✓':''}</span>`;
+    }).join('');
+    const room = m.room ? `房 ${esc(roomLabel(m.room))}` : '—';
+    return `
+      <tr>
+        <td>${esc(m.name)}</td>
+        <td>${esc(m.phone||'—')}</td>
+        <td>${itins||'—'}</td>
+        <td>${room}</td>
+        <td><button class="btn small danger" data-action="delete-member" data-id="${m.id}">刪除</button></td>
+      </tr>
+    `;
+  }).join('');
+  return `
+    <h2 class="section-title">團員總覽</h2>
+    <p class="section-hint">共 ${state.members.length} 位團員 ・ ${state.itineraries.length} 個行程 ・ ${state.rooms.length} 間房</p>
+    <table>
+      <thead><tr><th>姓名</th><th>電話</th><th>行程（✓＝已報到）</th><th>房間</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+/* ---------- event wiring ---------- */
+document.getElementById('tabs').addEventListener('click', e=>{
+  const b = e.target.closest('button[data-tab]');
+  if(!b) return;
+  currentTab = b.dataset.tab;
+  render();
+});
+
+document.getElementById('app').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const form = e.target.closest('form[data-form]');
+  if(!form) return;
+  const type = form.dataset.form;
+  const fd = new FormData(form);
+
+  if(type === 'register'){
+    const name = (fd.get('name')||'').trim();
+    const phone = (fd.get('phone')||'').trim();
+    if(!name) return;
+    if(phone.replace(/\D/g,'').length < 4){ showToast('請輸入至少4碼的手機號碼'); return; }
+    const itinIds = Array.from(form.querySelectorAll('input[name=itin]:checked')).map(cb=>cb.value);
+    if(!itinIds.length){ showToast('請至少選擇一個行程'); return; }
+    state.members.push({
+      id: uid(), name, phone, note:(fd.get('note')||'').trim(),
+      itineraryIds: itinIds, room:null, checkins:{}
+    });
+    await saveState();
+    showToast('報名完成！可至「我的行程」用姓名＋手機後4碼查詢');
+    render();
+  }
+
+  else if(type === 'myinfo-login'){
+    const name = (fd.get('name')||'').trim();
+    const pass = (fd.get('pass')||'').trim();
+    const match = state.members.find(m => m.name === name && (m.phone||'').replace(/\D/g,'').slice(-4) === pass);
+    if(match){
+      myInfoId = match.id;
+      myInfoError = '';
+    } else {
+      myInfoError = '姓名或密碼不正確，請確認後再試一次。';
+    }
+    render();
+  }
+
+  else if(type === 'checkin-submit'){
+    const name = (fd.get('name')||'').trim();
+    const pass = (fd.get('pass')||'').trim();
+    const match = state.members.find(m => m.name === name && (m.phone||'').replace(/\D/g,'').slice(-4) === pass);
+    if(!match){ checkinError = '姓名或密碼不正確，請確認後再試一次。'; render(); return; }
+    if(!match.itineraryIds.includes(checkinTargetId)){ checkinError = '你尚未報名此行程，請聯繫領隊確認。'; render(); return; }
+    if(!match.checkins) match.checkins = {};
+    match.checkins[checkinTargetId] = { checked:true, time: new Date().toLocaleString('zh-TW',{hour12:false}) };
+    await saveState();
+    checkinError = '';
+    checkinMatchedMemberId = match.id;
+    render();
+  }
+
+  else if(type === 'itinerary'){
+    state.itineraries.push({
+      id: uid(), name:(fd.get('name')||'').trim(), date:fd.get('date')||'',
+      time:fd.get('time')||'', rollCallTime:fd.get('rollCallTime')||'', location:(fd.get('location')||'').trim()
+    });
+    await saveState();
+    showToast('已新增行程');
+    render();
+  }
+
+  else if(type === 'itinerary-edit'){
+    const id = form.dataset.id;
+    const it = itinById(id);
+    if(it){
+      it.name = (fd.get('name')||'').trim();
+      it.date = fd.get('date')||'';
+      it.time = fd.get('time')||'';
+      it.rollCallTime = fd.get('rollCallTime')||'';
+      it.location = (fd.get('location')||'').trim();
+    }
+    editingItinId = null;
+    await saveState();
+    showToast('已更新行程');
+    render();
+  }
+
+  else if(type === 'room'){
+    state.rooms.push({
+      id: uid(), roomNumber:(fd.get('roomNumber')||'').trim(),
+      type:(fd.get('type')||'').trim(), capacity: parseInt(fd.get('capacity')||'2',10) || 2
+    });
+    await saveState();
+    showToast('已新增房間');
+    render();
+  }
+});
+
+document.getElementById('app').addEventListener('click', async e=>{
+  const btn = e.target.closest('[data-action]');
+  if(!btn) return;
+  const action = btn.dataset.action;
+
+  if(action === 'delete-itin'){
+    if(!confirm('確定要刪除此行程嗎？團員的報名紀錄中也會移除此行程。')) return;
+    const id = btn.dataset.id;
+    state.itineraries = state.itineraries.filter(i=>i.id!==id);
+    state.members.forEach(m=>{ m.itineraryIds = m.itineraryIds.filter(x=>x!==id); if(m.checkins) delete m.checkins[id]; });
+    await saveState(); render();
+  }
+  else if(action === 'myinfo-logout'){ myInfoId = null; myInfoError=''; render(); }
+  else if(action === 'checkin-goto-myinfo'){
+    myInfoId = btn.dataset.id;
+    checkinTargetId = null; checkinMatchedMemberId = null;
+    history.replaceState({}, '', location.pathname);
+    currentTab = 'myinfo';
+    render();
+  }
+  else if(action === 'toggle-itin-qr'){
+    qrVisibleItinId = qrVisibleItinId === btn.dataset.id ? null : btn.dataset.id;
+    render();
+  }
+  else if(action === 'edit-itin'){ editingItinId = btn.dataset.id; render(); }
+  else if(action === 'cancel-edit-itin'){ editingItinId = null; render(); }
+
+  else if(action === 'delete-room'){
+    if(!confirm('確定要刪除此房間嗎？')) return;
+    const id = btn.dataset.id;
+    state.rooms = state.rooms.filter(r=>r.id!==id);
+    state.members.forEach(m=>{ if(m.room===id) m.room=null; });
+    await saveState(); render();
+  }
+  else if(action === 'unassign-room'){
+    const m = memberById(btn.dataset.member);
+    if(m){ m.room = null; await saveState(); render(); }
+  }
+  else if(action === 'delete-member'){
+    if(!confirm('確定要刪除此團員的報名資料嗎？')) return;
+    state.members = state.members.filter(m=>m.id!==btn.dataset.id);
+    await saveState(); render();
+  }
+  else if(action === 'toggle-checkin'){
+    const m = memberById(btn.dataset.member);
+    const itinId = btn.dataset.itin;
+    if(!m) return;
+    if(!m.checkins) m.checkins = {};
+    const cur = m.checkins[itinId] || {checked:false, time:null};
+    if(cur.checked){
+      m.checkins[itinId] = {checked:false, time:null};
+    } else {
+      m.checkins[itinId] = {checked:true, time:new Date().toLocaleString('zh-TW',{hour12:false})};
+    }
+    await saveState(); render();
+  }
+});
+
+document.getElementById('app').addEventListener('change', async e=>{
+  const el = e.target;
+  if(el.dataset.action === 'select-rollcall-itin'){
+    rollcallItinId = el.value; render();
+  }
+  else if(el.dataset.action === 'filter-rollcall'){
+    rollcallFilter = el.value; render();
+    // restore focus after re-render
+    const input = document.querySelector('[data-action=filter-rollcall]');
+    if(input){ input.focus(); input.selectionStart = input.selectionEnd = input.value.length; }
+  }
+  else if(el.dataset.action === 'assign-room'){
+    const memberId = el.value;
+    const roomId = el.dataset.room;
+    if(!memberId) return;
+    const m = memberById(memberId);
+    if(m){ m.room = roomId; await saveState(); render(); }
+  }
+});
+
+document.getElementById('app').addEventListener('input', e=>{
+  if(e.target.dataset.action === 'filter-rollcall'){
+    rollcallFilter = e.target.value;
+    // lightweight re-render without full DOM rebuild loss: rebuild but keep focus
+    const val = e.target.value;
+    render();
+    const input = document.querySelector('[data-action=filter-rollcall]');
+    if(input){ input.focus(); input.value = val; input.selectionStart = input.selectionEnd = val.length; }
+  }
+});
+
+loadState();
+</script>
+</body>
+</html>
